@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
