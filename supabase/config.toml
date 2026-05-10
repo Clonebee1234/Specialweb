@@ -1,0 +1,31 @@
+# Supabase local-dev configuration. Only fields the CLI actually reads are
+# populated; the rest use CLI defaults.
+#
+# To bring up a local Postgres + Storage stack:
+#   npx supabase start
+# To apply migrations from ./migrations:
+#   npx supabase db reset        # wipe + replay everything (dev only)
+#   npx supabase db push         # push to a linked remote project
+
+project_id = "celebrate-them"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"

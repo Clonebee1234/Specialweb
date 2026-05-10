@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+ * Base tokens — fallback values used when no theme class is applied (landing,
+ * admin, confirmation). The theme classes below override these on the
+ * recipient experience root.
+ * ============================================================================= */
+
+:root {
+  --bg-a: #0b0b0f;
+  --bg-b: #1a1a22;
+  --accent-1: #f5c56b;
+  --accent-2: #e879a6;
+  --accent-3: #8ab4ff;
+  --text-primary: #f6f5f2;
+  --text-muted: rgba(246, 245, 242, 0.7);
+  --font-display: 'ui-serif', Georgia, serif;
+  --font-body: 'ui-sans-serif', system-ui, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* =============================================================================
+ * Theme classes. One per variant; the experience root gets `theme-<name>`.
+ * Keep this list in sync with:
+ *   - src/lib/constants.ts  (BIRTHDAY_THEMES + EXPRESSION_THEMES)
+ *   - src/lib/canvas/replyImage.ts  (ReplyImageTheme palettes for expression)
+ * ============================================================================= */
+
+.theme-confetti-burst {
+  --bg-a: #0a0a1a;
+  --bg-b: #3a0a5a;
+  --accent-1: #ff3ea5;
+  --accent-2: #00e0ff;
+  --accent-3: #ffd43b;
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.72);
+}
+
+.theme-golden-glow {
+  --bg-a: #1a1008;
+  --bg-b: #3a240e;
+  --accent-1: #f5c56b;
+  --accent-2: #ffe2a8;
+  --accent-3: #b87a34;
+  --text-primary: #fff6e4;
+  --text-muted: rgba(255, 246, 228, 0.7);
+}
+
+.theme-neon-night {
+  --bg-a: #000000;
+  --bg-b: #1a002a;
+  --accent-1: #ff00ff;
+  --accent-2: #00ffff;
+  --accent-3: #a0ff00;
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.7);
+}
+
+.theme-starry-dream {
+  --bg-a: #050520;
+  --bg-b: #10103a;
+  --accent-1: #c7d2fe;
+  --accent-2: #8ab4ff;
+  --accent-3: #e6e6ff;
+  --text-primary: #f5f5ff;
+  --text-muted: rgba(245, 245, 255, 0.7);
+}
+
+.theme-midnight-letters {
+  --bg-a: #0a0a0f;
+  --bg-b: #141428;
+  --accent-1: #e8c978;
+  --accent-2: #c7a85a;
+  --accent-3: #f5f2ea;
+  --text-primary: #f5f2ea;
+  --text-muted: rgba(245, 242, 234, 0.72);
+}
+
+.theme-soft-bloom {
+  --bg-a: #1a0a10;
+  --bg-b: #3a1a28;
+  --accent-1: #f3b0c3;
+  --accent-2: #f7d6e0;
+  --accent-3: #c86b8a;
+  --text-primary: #fdeef0;
+  --text-muted: rgba(253, 238, 240, 0.78);
+}
+
+.theme-warm-sunset {
+  --bg-a: #1a0f08;
+  --bg-b: #3a1f14;
+  --accent-1: #f2a679;
+  --accent-2: #ffc9a2;
+  --accent-3: #c46a3a;
+  --text-primary: #fef0dc;
+  --text-muted: rgba(254, 240, 220, 0.78);
+}
+
+/* =============================================================================
+ * Animations used across the chapter components.
+ * ============================================================================= */
+
+@keyframes ct-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes ct-pulse-soft {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes ct-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ct-ken-burns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.15) translate(-3%, -2%); }
+}
+
+@keyframes ct-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+ * Component layer — shared utility classes.
+ * ============================================================================= */
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-text-primary outline-none transition;
+  }
+  .input:focus {
+    border-color: rgba(245, 197, 107, 0.6);
+    box-shadow: 0 0 0 3px rgba(245, 197, 107, 0.2);
+  }
+}

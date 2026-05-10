@@ -1,0 +1,7 @@
+.next
+node_modules
+out
+coverage
+playwright-report
+.vercel
+package-lock.json
