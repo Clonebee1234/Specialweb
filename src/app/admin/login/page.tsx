@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,7 +74,6 @@ export default function AdminLoginPage() {
           placeholder="Password"
           autoComplete="current-password"
           disabled={busy}
-          autoFocus
         />
         
         <button
