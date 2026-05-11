@@ -30,32 +30,54 @@ import { ADMIN_LOGIN_FAIL_DELAY_MS } from '@/lib/constants';
 
 export const POST = apiHandler(async (req: NextRequest) => {
   const start = Date.now();
-  const body = await req.json().catch(() => null);
-  const parsed = LoginSchema.safeParse(body);
+  
+  // Parse request body
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    throw new HttpError(400, 'INVALID_REQUEST', 'Invalid JSON in request body');
+  }
 
+  const parsed = LoginSchema.safeParse(body);
+  if (!parsed.success) {
+    await delayUntil(start + ADMIN_LOGIN_FAIL_DELAY_MS);
+    throw new HttpError(400, 'VALIDATION_ERROR', 'Password is required');
+  }
+
+  // Rate limiting
   const ip = getClientIp(req);
   const bucket = RateLimitBuckets.adminLogin(ip);
   const rl = await getRateLimiter().consume(bucket.key, bucket.limit, bucket.windowMs);
   if (!rl.ok) {
-    throw new HttpError(429, 'RATE_LIMITED', 'Too many attempts. Please try again later.');
-  }
-
-  if (!parsed.success) {
-    await delayUntil(start + ADMIN_LOGIN_FAIL_DELAY_MS);
-    throw new HttpError(401, 'INVALID_CREDENTIALS', 'Invalid password');
+    throw new HttpError(429, 'RATE_LIMITED', 'Too many login attempts. Please try again in a few minutes.');
   }
 
   const submitted = parsed.data.password;
-  const settings = await readSettings();
+  
+  // Read settings from database
+  let settings;
+  try {
+    settings = await readSettings();
+  } catch (error) {
+    throw new HttpError(500, 'DATABASE_ERROR', 'Failed to connect to database. Please check your Supabase configuration.');
+  }
 
-  // Prefer DB-stored hash, fall back to env hash, fall back to plaintext env.
+  // Verify password
   let ok = false;
-  if (settings.admin_password_hash) {
-    ok = await verifyPasscode(submitted, settings.admin_password_hash);
-  } else if (env.ADMIN_PASSWORD_HASH) {
-    ok = await verifyPasscode(submitted, env.ADMIN_PASSWORD_HASH);
-  } else if (env.ADMIN_PASSWORD) {
-    ok = constantTimeStringEq(submitted, env.ADMIN_PASSWORD);
+  try {
+    if (settings.admin_password_hash) {
+      ok = await verifyPasscode(submitted, settings.admin_password_hash);
+    } else if (env.ADMIN_PASSWORD_HASH) {
+      ok = await verifyPasscode(submitted, env.ADMIN_PASSWORD_HASH);
+    } else if (env.ADMIN_PASSWORD) {
+      ok = constantTimeStringEq(submitted, env.ADMIN_PASSWORD);
+    } else {
+      throw new HttpError(500, 'CONFIG_ERROR', 'Admin password not configured. Please set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH.');
+    }
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, 'AUTH_ERROR', 'Password verification failed');
   }
 
   if (!ok) {
@@ -63,17 +85,25 @@ export const POST = apiHandler(async (req: NextRequest) => {
     throw new HttpError(401, 'INVALID_CREDENTIALS', 'Invalid password');
   }
 
+  // Generate session
   const now = Date.now();
   const sid = randomUUID();
-  const adminCookie = signPayload({
-    kind: 'admin',
-    sid,
-    iat: now,
-    exp: now + ADMIN_SESSION_TTL_SEC * 1000,
-  });
+  
+  let adminCookie;
+  try {
+    adminCookie = signPayload({
+      kind: 'admin',
+      sid,
+      iat: now,
+      exp: now + ADMIN_SESSION_TTL_SEC * 1000,
+    });
+  } catch (error) {
+    throw new HttpError(500, 'COOKIE_ERROR', 'Failed to generate session cookie. Please check COOKIE_SIGNING_SECRET is configured.');
+  }
+
   const csrfToken = generateCsrfToken();
 
-  const res = NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true, message: 'Login successful' });
   res.cookies.set(ADMIN_COOKIE_NAME, adminCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

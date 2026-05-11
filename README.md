@@ -30,7 +30,6 @@ This README walks through every step you need — on a new laptop or a fresh dep
 - **GSAP + ScrollTrigger**, **Framer Motion**, **canvas-confetti** for the recipient experiences
 - **Vitest + fast-check** for unit and property-based tests
 - **Playwright** for end-to-end tests
-- **Vercel Cron** for the hourly expiry job
 - **Upstash Redis** for serverless rate limiting
 
 The full specification lives in `.kiro/specs/celebrate-them/{requirements.md,design.md,tasks.md}` — read those for the exhaustive behavioral contract. This README is just the operator's guide.
@@ -72,7 +71,6 @@ Everything in this project works on Windows, but a few things differ from macOS/
 - **Setting env vars on Windows** (PowerShell):
   ```powershell
   $env:COOKIE_SIGNING_SECRET = "..."
-  $env:CRON_SECRET = "..."
   ```
   In `cmd.exe`:
   ```cmd
@@ -113,7 +111,7 @@ Either script will:
 1. Verify Node 18.17+ is installed
 2. Run `npm install` (pulls every package listed in `package.json`)
 3. Install Playwright browsers (for the e2e test suite — skip with `SKIP_PLAYWRIGHT=1`)
-4. Copy `.env.example` → `.env.local` and fill in freshly-generated `COOKIE_SIGNING_SECRET` + `CRON_SECRET` values for you
+4. Copy `.env.example` → `.env.local` and fill in freshly-generated `COOKIE_SIGNING_SECRET` value for you
 5. Run `typecheck` + the property-based tests to make sure the checkout is healthy
 
 After it finishes, fill in real Supabase credentials in `.env.local` if you want end-to-end flows (otherwise placeholders render the UI but API calls fail).
@@ -194,17 +192,14 @@ Copy the example and fill it in:
 cp .env.example .env.local
 ```
 
-Generate the two required secrets:
+Generate the required secret:
 
 ```bash
 # COOKIE_SIGNING_SECRET (48 random bytes, base64url)
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
-
-# CRON_SECRET (24 random bytes is plenty)
-node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
 ```
 
-**Why two secrets?** The cookie secret signs session tokens (HMAC-SHA256); leaking it means anyone can impersonate the admin. The cron secret is the shared password Vercel Cron presents when calling `/api/cron/expire`; leaking it lets anyone trigger the expiry job.
+**Why this secret?** The cookie secret signs session tokens (HMAC-SHA256); leaking it means anyone can impersonate the admin.
 
 ### Required minimum
 
@@ -213,7 +208,6 @@ node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — for public storage reads
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only, bypasses RLS
 - `COOKIE_SIGNING_SECRET` — the generated string
-- `CRON_SECRET` — the generated string
 - `ADMIN_PASSWORD` (or `ADMIN_PASSWORD_HASH`) — used to log into `/admin`
 
 ### Optional but recommended
@@ -334,15 +328,12 @@ One-time, from a machine with the Vercel CLI (or via the dashboard; steps mirror
 3. **Add environment variables** in Project Settings → Environment Variables. Add **every** variable from `.env.example` that is relevant to production. Critical ones:
    - `NEXT_PUBLIC_APP_URL` → your Vercel URL (e.g. `https://celebrate-them.vercel.app`)
    - Supabase URL + keys
-   - `COOKIE_SIGNING_SECRET`, `CRON_SECRET` — use `vercel env pull` locally to confirm they are not leaked into git
+   - `COOKIE_SIGNING_SECRET` — use `vercel env pull` locally to confirm it's not leaked into git
    - `ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`
    - `UPSTASH_REDIS_REST_URL` + `TOKEN` (production requires these)
    - `NEXT_PUBLIC_ADMIN_INSTAGRAM_URL` + `_HANDLE`
 
    **Why per-environment?** Mark each variable's environments (Production, Preview, Development). Development vars are pulled via `vercel env pull .env.development.local`.
-
-4. **Cron**: Vercel reads `vercel.json` automatically (added in a later phase) and schedules `/api/cron/expire` hourly. Confirm the job appears under Project → Settings → Cron Jobs after the first deploy.
-
 5. **Custom domain** (optional): Project → Settings → Domains → add your domain and update the DNS records Vercel shows.
 
 ---
@@ -406,8 +397,8 @@ When in doubt, read the spec first.
 - ✅ Admin detail page (`/admin/celebrations/[id]`) with pending banner, approve/reject, full content view, photo gallery with per-photo delete, reply image generator
 - ✅ Dedicated pending-approval queue (`/admin/pending`) sorted by activation time
 - ✅ Admin settings page (default window, maintenance mode, password change)
-- ✅ All API routes (public + admin + cron)
-- ✅ Cron expiry endpoint + `vercel.json` hourly binding
+- ✅ All API routes (public + admin)
+- ✅ Admin permanent delete functionality for celebrations and photos
 - ✅ Middleware: request-id tracing, admin auth gate, CSRF double-submit, security headers (CSP, HSTS, XFO, etc.)
 - ✅ Supabase migrations: table + indexes + CHECK constraints + trigger + settings + view-count RPC
 - ✅ Passcode hashing (scrypt), constant-time comparison, unlock cookies with passcode_version binding (admin reset invalidates all live sessions)

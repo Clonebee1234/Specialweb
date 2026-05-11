@@ -25,7 +25,6 @@ const serverSchema = z.object({
   ADMIN_PASSWORD_HASH: z.string().optional(),
 
   COOKIE_SIGNING_SECRET: z.string().min(32, 'COOKIE_SIGNING_SECRET must be at least 32 characters'),
-  CRON_SECRET: z.string().min(16, 'CRON_SECRET must be at least 16 characters'),
 
   UPSTASH_REDIS_REST_URL: z.string().url().optional().or(z.literal('')),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
